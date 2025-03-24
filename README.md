@@ -6,7 +6,7 @@ https://hackmd.io/@clayton46/HJTilmur1l/edit
 
 #### 等待佇列 (Wait Queue) 是一種 同步機制 (Synchronization Mechanism)，主要用來讓Process 進入睡眠狀態，直到某個條件被滿足後再喚醒進程，本次 Project 在Kernel Space 實作一個自訂的等待佇列機制，並透過 系統呼叫 (System Call) 讓 使用者應用程式 (User Applications) 進行操作。了解到如何避免忙等待 (Busy-Waiting)，提升系統效能、如何在核心 (Kernel) 與使用者空間 (User Space) 之間建立介面、掌握 FIFO 原則在同步機制中的應用等等。
 
-# Wait Queue
+# trace code
 
 ![image](https://github.com/user-attachments/assets/4fd65ec1-657c-4d84-9794-468170c523ca)
 
@@ -95,5 +95,50 @@ https://elixir.bootlin.com/linux/v5.15.137/source/include/linux/list.h#L90
 https://elixir.bootlin.com/linux/v5.15.137/source/tools/include/linux/list.h#L48
 
 ![image](https://github.com/user-attachments/assets/8e54eb2e-1d1e-496a-a9f1-a92a562ecde6)
+
+## result 
+
+![image](https://github.com/user-attachments/assets/9812267a-4500-445d-b322-5cde9220921c)
+
+### FIFO實作重點整理
+
+##### 1.Thread 的並行建立與執行
+
+在 pthread_create 建立 thread 時，thread 會立即開始執行（並行執行）。
+
+每個 thread 的第一個動作是輸出 "enter wait queue thread_id:XX" 並執行進入 wait queue 的操作。
+
+由於是並行執行，輸出順序不一定按 thread_id 的建立順序（例如，thread_id 較大的 thread 可能會先輸出）。
+
+##### 2.輸出與執行順序的差異
+
+雖然 for 迴圈依序建立 thread，thread 執行的時間差極小，因此相鄰 thread 的執行順序可能交錯。
+
+enter wait queue thread_id:XX 的輸出順序不代表實際進入 wait queue 的順序。
+
+##### 3.System Call 的進入順序不確定性
+
+輸出 "enter wait queue thread_id:XX" 的 thread 不一定會先執行 syscall(xxx, 1)。
+
+並行執行情況下，thread 執行 system call 的順序可能被相鄰 thread 超越，但相鄰 thread 出現超越的機率較低。
+
+##### 4.FIFO 排隊的實現
+
+使用 Linked list 記錄每個 thread 實際執行 system call 的順序（以 PID 為基準）。
+
+設置全域變數 PID_add_to_wait_queue，保證每個 thread 依照記錄順序進入 wait queue。
+
+在喚醒過程中，依照 Linked list 的順序修改喚醒條件 condition，確保喚醒順序與進入順序一致（FIFO）。
+
+##### 5.輸出一致性
+
+為避免喚醒過程中 condition 被提前更改，每次修改 condition 後增加等待時間，確保 thread 被正確喚醒。
+
+喚醒後，先被喚醒的 thread 會先輸出 "exit wait queue thread_id:XX"，使輸出順序與實際 FIFO 喚醒順序一致。
+
+##### 6.未解決的不確定性
+
+Thread 從輸出 "enter wait queue thread_id:XX" 到執行 syscall(xxx, 1) 並加入 list 的過程中，可能出現後輸出的 thread 先執行 system call 的情況（相鄰 thread 的機率較高，但整體機率低）。
+
 
 
