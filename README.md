@@ -2,6 +2,8 @@
 
 https://hackmd.io/@clayton46/HJTilmur1l/edit
 
+## 整體流程概述
+
 #### 等待佇列 (Wait Queue) 是一種 同步機制 (Synchronization Mechanism)，主要用來讓Process 進入睡眠狀態，直到某個條件被滿足後再喚醒進程，本次 Project 在Kernel Space 實作一個自訂的等待佇列機制，並透過 系統呼叫 (System Call) 讓 使用者應用程式 (User Applications) 進行操作。了解到如何避免忙等待 (Busy-Waiting)，提升系統效能、如何在核心 (Kernel) 與使用者空間 (User Space) 之間建立介面、掌握 FIFO 原則在同步機制中的應用等等。
 
 # Wait Queue
