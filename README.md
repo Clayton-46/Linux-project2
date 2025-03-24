@@ -78,6 +78,14 @@ https://elixir.bootlin.com/linux/v5.15.137/source/include/linux/wait.h
 
 ![image](https://github.com/user-attachments/assets/81e1643d-543b-486f-88d7-c16c0cc854c5)
 
+entry->list 表示新節點。
+
+my_list 是主鏈表。
+
+將 entry->list 作為新節點加入到 my_list 的尾部。
+
+運行後，my_list 的尾節點會更新為 entry->list，保證後續新增的節點繼續添加到尾部，維持 FIFO 順序。
+
 
 https://elixir.bootlin.com/linux/v5.15.137/source/include/linux/list.h#L90
 
